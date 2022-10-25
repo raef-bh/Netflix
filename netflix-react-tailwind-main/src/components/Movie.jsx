@@ -1,53 +1,60 @@
-import React, { useState } from 'react';
-import { FaHeart, FaRegHeart } from 'react-icons/fa';
-import { UserAuth } from '../context/AuthContext';
-import { db } from '../firebase';
-import { arrayUnion, doc, updateDoc } from 'firebase/firestore';
+import axios from 'axios'
+import React, { useEffect, useState } from 'react'
+import {MdChevronLeft , MdChevronRight} from 'react-icons/md'
 
-const Movie = ({ item }) => {
-  const [like, setLike] = useState(false);
-  const [saved, setSaved] = useState(false);
-  const { user } = UserAuth();
+import Movie from './Movie'
 
-  const movieID = doc(db, 'users', `${user?.email}`);
+const Row = ({title, fetchURL ,rowId}) => {
+   const [movies ,setMovies] =useState([])
 
-  const saveShow = async () => {
-    if (user?.email) {
-      setLike(!like);
-      setSaved(true);
-      await updateDoc(movieID, {
-        savedShows: arrayUnion({
-          id: item.id,
-          title: item.title,
-          img: item.backdrop_path,
-        }),
-      });
-    } else {
-      alert('Please log in to save a movie');
-    }
-  };
+
+   useEffect(()=>{
+    axios.get(fetchURL).then((response) =>{
+        setMovies(response.data.results)
+    })
+   },[fetchURL])
+   console.log(movies)
+
+   const  slideLeft = () =>{
+    var slider = document.getElementById('slider' +rowId)
+    slider.scrollLeft = slider.scrollLeft - 500; 
+   }
+   const  slideRight = () =>{
+    var slider = document.getElementById('slider' +rowId)
+    slider.scrollLeft = slider.scrollLeft + 500; 
+   }
+
 
   return (
-    <div className='w-[160px] sm:w-[200px] md:w-[240px] lg:w-[280px] inline-block cursor-pointer relative p-2'>
-      <img
-        className='w-full h-auto block'
-        src={`https://image.tmdb.org/t/p/w500/${item?.backdrop_path}`}
-        alt={item?.title}
-      />
-      <div className='absolute top-0 left-0 w-full h-full hover:bg-black/80 opacity-0 hover:opacity-100 text-white'>
-        <p className='white-space-normal text-xs md:text-sm font-bold flex justify-center items-center h-full text-center'>
-          {item?.title}
-        </p>
-        <p onClick={saveShow}>
-          {like ? (
-            <FaHeart className='absolute top-4 left-4 text-gray-300' />
-          ) : (
-            <FaRegHeart className='absolute top-4 left-4 text-gray-300' />
-          )}
-        </p>
-      </div>
-    </div>
-  );
-};
+    <>
+    <h2 className='text-white font-bold md:text-xl p-4'>{title}</h2>
+    <div className='relative flex items-center group '>
+        <MdChevronLeft className='bg-white left-0 rounded-full absolute opacity-50 hover:opacity-100 cursor-pointer z-10 hidden group-hover:block '
+        size={40} 
+        onClick={slideLeft}
+        />
+        <div id ={'slider' + rowId} className='w-ful h-full overflow-x-scroll whitespace-nowrap scroll-smooth scrollbar-hide relative'>
+            {
+                movies.map((item,id) =>(
+                   <Movie item={item} key={id}/>
+                        
+                ))
+            }
 
-export default Movie;
+        </div>
+        <MdChevronRight 
+        className='bg-white right-0 rounded-full absolute opacity-50 hover:opacity-100 cursor-pointer z-10 hidden group-hover:block '
+        size={40}
+        onClick={slideRight}
+        />
+        
+
+
+    </div>
+    
+    
+    </>
+  )
+}
+
+export default Row
